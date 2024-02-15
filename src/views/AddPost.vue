@@ -2,40 +2,39 @@
     <form @submit.prevent="handleSubmit">
         <label>Title:</label>
         <input type="text" v-model="title" required>
-        <label>Details:</label>
-        <textarea v-model="details" required></textarea>
+        <label>Content:</label>
+        <textarea v-model="content" required></textarea>
         <button>Add Project</button>
     </form>
 </template>
 
 <script>
+import { ref } from "vue";
+import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { fb } from "../firebase/config";
+import { useRouter } from "vue-router";
 export default {
-    props: ['id'],
-    data() {
-        return {
-            title: "",
-            details: "",
-            uri: 'http://localhost:3000/projects/' + this.id
-        }
-    },
-    mounted(){
-        fetch(this.uri)
-        .then(res=>res.json())
-        .then(data=>{
-            this.title = data.title
-            this.details = data.details
-        });
-    },
-    methods: {
-        handleSubmit() {
-            fetch(this.uri, {
-                method: 'PATCH',
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({title: this.title, details: this.details})
+    setup() {
+        const title = ref("");
+        const content = ref("");
+        const id = Date.now();
+        const router = useRouter();
+        function handleSubmit() {
+            const post = {
+                title:title.value,
+                content:content.value,
+                id:id,
+            };
+            const db = getFirestore(fb);
+            const fbRef = collection(db,"posts");
+
+            addDoc(fbRef, post);
+            router.push({
+                name:"Home"
             })
-            .then(()=>this.$router.push('/'))
-            .catch((err) => console.log(err))
         }
+
+        return {title, content, handleSubmit}
     }
 }
 </script>
